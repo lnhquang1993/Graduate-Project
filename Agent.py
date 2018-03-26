@@ -9,17 +9,20 @@ import threading
 import socket
 import sys
 import argparse
+import pickle
 
 
 General = subprocess.check_output('systeminfo')[1:].split("\n")
 		
 def OS():
-	print ("Operating System Information")
-	oslist = General[0:23] + General[29:31]
+
+	# Operating System Information
+	oslist = General[1:23] + General[29:31]
 	return oslist
 
 def CPU():
-	print ("CPU Information")
+
+	# CPU Information
 	lp = str(multiprocessing.cpu_count()) # Logical processors
 	cc = str(psutil.cpu_count(logical=False)) # CPU Cores
 	cn = platform.processor() # Chip Name
@@ -30,7 +33,8 @@ def CPU():
 	return CPUlist
 
 def DISK():
-	print ("DISK Information")
+
+	# Disk Information
 	disk_results = psutil.disk_partitions()
 	DISKlist = {}
 	id = 0
@@ -44,6 +48,8 @@ def DISK():
 	return DISKlist
 
 def MEMORY():
+
+	# Memory Information
 	mem = psutil.virtual_memory()
 	MEMORYlist = []
 	for m in mem:
@@ -54,6 +60,8 @@ def MEMORY():
 	return MEMORYlist
 
 def NETWORK():
+
+	# Networking Information
 	netstr = ''
 	for interface, snics in psutil.net_if_addrs().items():
 		for snic in snics:
@@ -65,26 +73,29 @@ def NETWORK():
 	netstr = netstr.split(',')[:-1]
 	return netstr
 
-def FWStatus() :
+def FIREWALL() :
+
+	# Firewall Information
 	FW = []
 	result = subprocess.check_output('netsh advfirewall show allprofiles state').split()
 	for x in result[5::6]:
 		FW.append(x)
 	return FW
 
-def ListenServer():
+"""def ListenServer():
+
 	# Listen init signal from Server to send data
 
-	HOST = '192.168.10.111'                 # Symbolic name meaning all available interfaces
+	HOST = ''                 # Symbolic name meaning all available interfaces
 	PORT = 50007              # Arbitrary non-privileged port
 
-	"""
+	
 	# TCP socket
-	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.bind((HOST, PORT))
-	s.listen(1)
-	s.accept()
-	s.close()"""
+	#s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	#s.bind((HOST, PORT))
+	#s.listen(1)
+	#s.accept()
+	#s.close()
 
 	# UDP Socket
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -92,14 +103,14 @@ def ListenServer():
 	data, addr = s.recvfrom(1024)
 	if data == 'Authen':
 		SocketConnect(addr[0])
+"""
 
-def SocketConnect(HOST):
+def SocketConnect():
 	# Connect to Server to send data
-	print HOST
-	PORT = 50008              # The same port as used by the server
+	Server_IP = '192.168.10.222'
+	PORT = 40009      # The same port as used by the server
 
 	# Create Socket
-	print "Create Socket"
 	try:
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	except socket.error, e:
@@ -107,25 +118,22 @@ def SocketConnect(HOST):
 		sys.exit(1)
 
 	# Connect
-	print "Connect"
 	try:
-		s.connect((HOST, PORT))
+		s.connect((Server_IP, PORT))
 	except socket.error, e:
 		print "Connection error: %s" %e
 		sys.exit(1)
 
 	# Send Data
-	print "Send Data"
+	
+	data = pickle.dumps({'OS':[OS()], 'CPU':[CPU()], 'DISK' : [DISK()], 'MEMORY': [MEMORY()], 'NETWORK': [NETWORK()], 'FIREWALL' : FIREWALL()})
 	try:
-		s.sendall('Hello, world')
+		s.send(data)
 	except socket.error, e:
 		print "Error sending data: %s" % e
 		sys.exit(1)
 
-
 	# Close Socket
 	s.close()
-	print "Close Socket"
 
-#SocketConnect('192.168.10.222')
-ListenServer()
+SocketConnect()
