@@ -107,7 +107,7 @@ def FIREWALL() :
 
 def SocketConnect():
 	# Connect to Server to send data
-	Server_IP = '192.168.10.222'
+	Server_IP = 'localhost'
 	PORT = 40009      # The same port as used by the server
 
 	# Create Socket
